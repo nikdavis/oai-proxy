@@ -40,7 +40,7 @@ class MultiClient(ContextClientP):
                 response.raise_for_status()
                 resource = response.json()
 
-                print(f"Resource: {resource}")
+                logger.debug(f"Resource: {resource}")
 
                 # Create a context snippet from the resource
                 snippet = WebsiteContextSnippet(

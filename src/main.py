@@ -2,45 +2,53 @@ from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import httpx
 import uvicorn
-import logging
-from src.hydrator import hydrator
-from src.clients.website_client import WebsiteContextClient
+import loguru
+from src.hydrator import ChatHydrator, clients
+import os
 
+from dotenv import load_dotenv
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+load_dotenv()
+
+logger = loguru.logger
 
 app = FastAPI()
-OPENAI_URL = "http://daddy-penguin:30001"
-
+LLM_BASE_URL = os.getenv("LLM_BASE_URL")
 
 @app.middleware("http")
 async def proxy_middleware(request: Request, call_next):
+    hydrator = ChatHydrator(clients)
+
     try:
         # Log incoming request
-        logger.info(f"Received {request.method} request to {request.url.path}")
-        logger.info(f"Proxying to {OPENAI_URL}{request.url.path}")
+        logger.info(f"Request: {request.url}")
+        logger.info(f"Proxying to: {LLM_BASE_URL}{request.url.path}")
 
+        logger.info(f"0) request.url.path: {request.url.path}")
         # Special handling for chat completions
         should_modify_request = request.url.path.endswith("/v1/chat/completions")
-
+        # should_modify_request = False
+        logger.info(f"1) Should modify request: {should_modify_request}")
         # Read the request body
         body = None
         if request.method != "GET":
+            logger.info("2) method != GET")
             try:
                 body = await request.json()
-
                 # Modify content for chat completions
                 if should_modify_request:
+                    logger.info("3) should_modify_request")
                     # Handle case where body is a list of messages directly
-                    if isinstance(body, list):
-                        logger.info("Request body is a list, converting to standard format")
-                        messages = body
-                        body = {"messages": messages}
-                    else:
-                        messages = body.get("messages", [])
+                    # if isinstance(body, list):
+                    #     print("4) body is a list")
+                    #     logger.info("Request body is a list, converting to standard format")
+                    #     messages = body
+                    #     body = {"messages": messages}
+                    # else:
+                    #     print("5) body is not a list")
+                    #     messages = body.get("messages", [])
 
+                    logger.info("6) hydrating body")
                     # Hydrate the chat by finding URLs and extracting context
                     hydrated_body = await hydrator.get_hydrated_chat(body)
                     body = hydrated_body
@@ -57,7 +65,7 @@ async def proxy_middleware(request: Request, call_next):
         # Forward the request to the target server
         async with httpx.AsyncClient() as client:
             # Build the request
-            target_url = f"{OPENAI_URL}{request.url.path}"
+            target_url = f"{LLM_BASE_URL}{request.url.path}"
             if request.url.query:
                 target_url += f"?{request.url.query}"
 
@@ -117,5 +125,5 @@ async def augment_response(response_stream, should_modify=False):
 
 
 if __name__ == "__main__":
-    logger.info(f"Starting proxy server, forwarding to {OPENAI_URL}")
+    logger.info(f"Starting proxy server, forwarding to {LLM_BASE_URL}")
     uvicorn.run(app, host="0.0.0.0", port=9000)

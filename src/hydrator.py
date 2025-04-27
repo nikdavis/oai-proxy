@@ -34,9 +34,16 @@ class ChatHydrator:
 
     async def get_hydrated_chat(self, chat: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Hydrating chat: {chat}")
+        print(f"Chat: {chat}")
         if not chat or "messages" not in chat:
             logger.warning("No valid chat object provided to hydrate")
             return chat
+
+        # Log system prompt if present
+        for message in chat.get("messages", []):
+            if message.get("role") == "system":
+                print(f"System prompt: {message.get('content')}")
+                break
 
         # Create a new chat object with the same structure
         hydrated_chat = dict(chat)
@@ -78,7 +85,7 @@ class ChatHydrator:
 
                 # Add more entity extraction and context retrieval here (commands, etc.)
 
-            logger.info(f"Hydrated message: {hydrated_message}")
+
             hydrated_chat["messages"].append(hydrated_message)
 
         return hydrated_chat
@@ -91,6 +98,3 @@ multi_client = MultiClient()
 clients = {
     ContextCommand.WEBSITE: multi_client
 }
-
-# Initialize hydrator with clients
-hydrator = ChatHydrator(clients)
