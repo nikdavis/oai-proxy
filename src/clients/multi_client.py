@@ -1,13 +1,14 @@
 import logging
 from typing import List
 import httpx
+from loguru import logger
 from src.models.context import WebsiteContextSnippet
 from src.models.resource import ResourceSubmission, ContentType
 from src.clients.context_client_p import ContextClientP
 
+
 API_BASE_URL = "http://127.0.0.1:8000"
 
-logger = logging.getLogger(__name__)
 class MultiClient(ContextClientP):
     """Client that uses the Context Killer API to create and retrieve resources."""
 
@@ -26,20 +27,23 @@ class MultiClient(ContextClientP):
             # Create the resource submission
             submission = ResourceSubmission(
                 url=url,
-                title=f"Content from {url}"
             )
 
             # Post to create resource
             try:
+                logger.info(f"POST {self.base_url}/api/v1/resources {submission.model_dump()}")
+
                 response = await client.post(
                     f"{self.base_url}/api/v1/resources",
                     json=submission.model_dump(),
                     timeout=30.0
                 )
-                response.raise_for_status()
+
                 resource = response.json()
 
                 logger.debug(f"Resource: {resource}")
+                logger.debug(f"Resource response metadata: {response.headers}")
+                logger.debug(f"Resource response status code: {response.status_code}")
 
                 # Create a context snippet from the resource
                 snippet = WebsiteContextSnippet(
@@ -47,6 +51,8 @@ class MultiClient(ContextClientP):
                     text_content=resource["content"],
                     title=resource["title"]
                 )
+
+                logger.info(f"Snippet: {snippet}")
 
                 # Convert to XML and return
                 return [snippet.to_xml()]

@@ -21,6 +21,7 @@ class ContextClient(Protocol):
 class ChatHydrator:
     def __init__(self, clients: dict[ContextCommand, ContextClient]):
         self.clients = clients
+        self.client = MultiClient()
         self.url_pattern = re.compile(
             r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+(?:/[^\s]*)?'
         )
@@ -33,8 +34,7 @@ class ChatHydrator:
         return self.url_pattern.findall(text)
 
     async def get_hydrated_chat(self, chat: Dict[str, Any]) -> Dict[str, Any]:
-        logger.info(f"Hydrating chat: {chat}")
-        print(f"Chat: {chat}")
+        logger.debug(f"Hydrating chat: {chat}")
         if not chat or "messages" not in chat:
             logger.warning("No valid chat object provided to hydrate")
             return chat
@@ -69,14 +69,22 @@ class ChatHydrator:
 
                     context_snippets = []
 
-                    if urls and ContextCommand.WEBSITE in self.clients:
+                    if urls:
                         for url in urls:
-                            # check cache for context snippets
+                            logger.info(f"Working on {url}; checking cache first")
                             if url in context_cache:
+                                logger.info(f"Found {len(context_cache[url])} context snippets in cache for {url}")
+                                for snippet in context_cache[url]:
+                                    logger.info(f"Snippet: {snippet}")
                                 context_snippets.extend(context_cache[url])
                             else:
-                                new_snippets = await self.clients[ContextCommand.WEBSITE].get_context(url)
+                                logger.info(f"No context snippets found in cache for {url}, fetching from API")
+                                client = self.client
+                                new_snippets = await client.get_context(url)
                                 context_cache[url] = new_snippets
+                                logger.info(f"Found {len(new_snippets)} context snippets for {url}")
+                                for snippet in new_snippets:
+                                    logger.info(f"Snippet: {snippet}")
                                 context_snippets.extend(new_snippets)
 
                         if context_snippets:

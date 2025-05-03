@@ -53,7 +53,8 @@ async def proxy_middleware(request: Request, call_next):
                     hydrated_body = await hydrator.get_hydrated_chat(body)
                     body = hydrated_body
                     logger.info("Chat has been hydrated with context")
-            except:
+            except Exception as e:
+                logger.exception("Error hydrating body")
                 # For non-JSON bodies, read as bytes
                 body = await request.body()
 

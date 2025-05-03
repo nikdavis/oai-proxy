@@ -89,3 +89,6 @@ class WebsiteContextSnippet(ContextSnippet):
             "title": title
         }
         super().__init__(type=ContextType.WEBSITE, content=content)
+
+    def __str__(self):
+        return f"WebsiteContextSnippet(url={self.content['url']}, title={self.content['title']}, text_content={self.content['text_content'][:100]})"
