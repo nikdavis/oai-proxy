@@ -80,13 +80,16 @@ class ChatHydrator:
                             else:
                                 logger.info(f"No context snippets found in cache for {url}, fetching from API")
                                 client = self.client
-                                new_snippets = await client.get_context(url)
-                                context_cache[url] = new_snippets
-                                logger.info(f"Found {len(new_snippets)} context snippets for {url}")
-                                for snippet in new_snippets:
-                                    logger.info(f"Snippet: {snippet}")
-                                context_snippets.extend(new_snippets)
-
+                                try:
+                                    new_snippets = await client.get_context(url)
+                                    context_cache[url] = new_snippets
+                                    logger.info(f"Found {len(new_snippets)} context snippets for {url}")
+                                    for snippet in new_snippets:
+                                        logger.info(f"Snippet: {snippet}")
+                                    context_snippets.extend(new_snippets)
+                                except Exception as e:
+                                    logger.exception(f"Error fetching context for {url}")
+                                    raise e
                         if context_snippets:
                             hydrated_message["content"] += "\n\n" + "\n\n".join(context_snippets)
                             logger.info(f"Added {len(context_snippets)} context snippets for URLs")

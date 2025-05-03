@@ -36,7 +36,7 @@ class MultiClient(ContextClientP):
                 response = await client.post(
                     f"{self.base_url}/api/v1/resources",
                     json=submission.model_dump(),
-                    timeout=30.0
+                    timeout=180.0
                 )
 
                 resource = response.json()
@@ -60,7 +60,7 @@ class MultiClient(ContextClientP):
             except httpx.HTTPError as e:
                 logger.error(f"Error creating resource: {e}")
                 # Fall back to mock implementation if API fails
-                return await self._mock_fallback(url)
+                raise e
 
     async def _mock_fallback(self, url: str) -> List[str]:
         """Fallback method if the API request fails."""
