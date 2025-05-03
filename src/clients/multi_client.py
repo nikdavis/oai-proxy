@@ -26,7 +26,6 @@ class MultiClient(ContextClientP):
             # Create the resource submission
             submission = ResourceSubmission(
                 url=url,
-                type=ContentType.WEBPAGE,
                 title=f"Content from {url}"
             )
 
