@@ -5,14 +5,24 @@ import uvicorn
 import loguru
 from src.hydrator import ChatHydrator, clients
 import os
+import logfire
+
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-logger = loguru.logger
 
 app = FastAPI()
+
+# setup logging & instrumentation
+logfire.configure()
+logfire.instrument_fastapi(app)
+
+logger = loguru.logger
+logger.configure(handlers=[logfire.loguru_handler()])
+
+# setup env vars
 LLM_BASE_URL = os.getenv("LLM_BASE_URL")
 
 @app.middleware("http")
