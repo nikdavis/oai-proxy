@@ -20,3 +20,10 @@ dev-dependencies = [
     "pytest-cov>=4.0.0",
     "ruff>=0.0.0",
 ]
+
+[tool.poe.tasks]
+sort_imports = { cmd = "ruff check --select I --fix ." }
+format = { cmd = "ruff format ." }
+lint = { cmd = "ruff check --fix ." }
+tidy = ["sort_imports", "format"]
+all = { sequence = ["sort_imports", "format", "lint"], help = "Run all code quality checks" }
