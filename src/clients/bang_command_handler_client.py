@@ -247,11 +247,6 @@ class BangCommandHandlerClient(ContextClientP):
                 with open(book_file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
-                # Truncate content if it's too long to avoid overly large context
-                max_len = 3000  # characters, adjust as needed
-                if len(content) > max_len:
-                    content = content[:max_len] + "\n... (truncated)"
-
                 return CommandContextSnippet(
                     command_query=command_query_str,
                     result_text=f"Content for {matched_filename}:\n\n{content}",
