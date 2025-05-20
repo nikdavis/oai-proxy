@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List
 
 import httpx
@@ -8,7 +9,7 @@ from src.clients.context_client_p import ContextClientP
 from src.models.context import WebsiteContextSnippet
 from src.models.resource import ContentType, ResourceSubmission
 
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = os.environ.get("CONTEXT_KILLER_API_BASE_URL", "http://127.0.0.1:8000")
 
 
 class MultiClient(ContextClientP):
