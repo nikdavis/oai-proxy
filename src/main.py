@@ -98,11 +98,17 @@ async def proxy_middleware(request: Request, call_next):
 
             logger.info(f"Received response with status {response.status_code}")
 
+            # Prepare headers for the final response, removing encodings httpx handles
+            final_response_headers = dict(response.headers)
+            final_response_headers.pop("content-encoding", None)
+            final_response_headers.pop("content-length", None)
+            final_response_headers.pop("transfer-encoding", None)
+
             # Return the response
             return StreamingResponse(
                 content=augment_response(response.aiter_bytes(), should_modify_request),
                 status_code=response.status_code,
-                headers=dict(response.headers),
+                headers=final_response_headers,
             )
 
     except httpx.RequestError as e:

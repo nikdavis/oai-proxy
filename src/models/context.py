@@ -78,7 +78,7 @@ class ContextProvider(Protocol):
         Returns:
             A list of context snippets
         """
-        pass
+        ...
 
 
 @dataclass
