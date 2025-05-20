@@ -37,7 +37,7 @@ async def proxy_middleware(request: Request, call_next):
 
         logger.info(f"0) request.url.path: {request.url.path}")
         # Special handling for chat completions
-        should_modify_request = request.url.path.endswith("/v1/chat/completions")
+        should_modify_request = request.url.path.endswith("/chat/completions")
         # should_modify_request = False
         logger.info(f"1) Should modify request: {should_modify_request}")
         # Read the request body
