@@ -15,18 +15,19 @@ class MultiClient(ContextClientP):
     def __init__(self, base_url: str = API_BASE_URL):
         self.base_url = base_url
 
-    async def get_context(self, url: str) -> List[str]:
+    async def get_context(self, key: str) -> List[str]: # Changed 'url' to 'key'
         """
-        Post a URL to the API and retrieve the processed content.
+        Post a URL (passed as 'key') to the API and retrieve the processed content.
         Implements the ContextClient protocol.
         """
-        logger.info(f"Getting context via API for URL: {url}")
+        logger.info(f"Getting context via API for URL (key): {key}")
 
         # Create a resource via the API
         async with httpx.AsyncClient() as client:
             # Create the resource submission
             submission = ResourceSubmission(
-                url=url,
+                url=key, # Use 'key' here
+                title=f"Content from {key}" # Use 'key' here
             )
 
             # Post to create resource
@@ -60,17 +61,17 @@ class MultiClient(ContextClientP):
             except httpx.HTTPError as e:
                 logger.error(f"Error creating resource: {e}")
                 # Fall back to mock implementation if API fails
-                raise e
+                return await self._mock_fallback(key) # Pass 'key'
 
-    async def _mock_fallback(self, url: str) -> List[str]:
+    async def _mock_fallback(self, key: str) -> List[str]: # Changed 'url' to 'key'
         """Fallback method if the API request fails."""
-        logger.info(f"Using fallback mock for URL: {url}")
-        content = f"API request failed. This is fallback content for {url}"
+        logger.info(f"Using fallback mock for URL (key): {key}")
+        content = f"API request failed. This is fallback content for {key}" # Use 'key'
 
         snippet = WebsiteContextSnippet(
-            url=url,
+            url=key, # Use 'key'
             text_content=content,
-            title=f"Fallback content for {url}"
+            title=f"Fallback content for {key}" # Use 'key'
         )
 
         return [snippet.to_xml()]

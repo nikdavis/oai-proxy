@@ -37,3 +37,6 @@ src
 
 # additional notes
 we don't do any funny business in __init__.py files (we leave them blank! just for module discovery)
+
+# Python style
+We use newer Python typing syntaxt (list over List; algebraic types over Optional e.g. str | None)

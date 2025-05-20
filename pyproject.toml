@@ -5,7 +5,7 @@ dependencies = [
     "uv>=0.4.6",
     "fastapi>=0.103.0",
     "pydantic>=2.0.0",
-    "litellm>=1.15.0",
+    "litellm", # Allow upgrading to the latest version
     "httpx>=0.24.0",
     "pytest>=7.0.0",
     "uvicorn>=0.23.0",
@@ -19,6 +19,13 @@ dependencies = [
 dev-dependencies = [
     "pytest-cov>=4.0.0",
     "ruff>=0.0.0",
+    "pytest-mock>=3.0.0",
+    "pytest-asyncio>=0.20.0", # Use a recent version
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
 ]
 
 [tool.poe.tasks]

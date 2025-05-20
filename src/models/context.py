@@ -11,6 +11,7 @@ class ContextType(str, Enum):
     CODE = "code"
     DOCUMENT = "document"
     COMMAND = "command"
+    COMMAND_RESULT = "command_result" # For the output of bang commands
     # Add more types as needed
 
 
@@ -90,5 +91,16 @@ class WebsiteContextSnippet(ContextSnippet):
         }
         super().__init__(type=ContextType.WEBSITE, content=content)
 
-    def __str__(self):
+def __str__(self):
         return f"WebsiteContextSnippet(url={self.content['url']}, title={self.content['title']}, text_content={self.content['text_content'][:100]})"
+@dataclass
+class CommandContextSnippet(ContextSnippet):
+    """Context snippet for the result of a bang command."""
+
+    def __init__(self, command_query: str, result_text: str, source: str):
+        content = {
+            "command_query": command_query,
+            "result_text": result_text,
+            "source": source
+        }
+        super().__init__(type=ContextType.COMMAND_RESULT, content=content)
