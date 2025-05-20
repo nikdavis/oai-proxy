@@ -115,6 +115,11 @@ class BangCommandHandlerClient(ContextClientP):
         handler = self.command_handlers.get(command_name)
 
         if handler:
+            # Scan books directory if the command is book-related
+            if command_name in ["books", "book", "b"]:
+                logger.info(f"Command '{command_name}' triggered book directory scan.")
+                self._scan_book_directory()  # Rescan for books
+
             try:
                 snippet = await handler(args)
                 return [snippet.to_xml()]
