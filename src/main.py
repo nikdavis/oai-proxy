@@ -1,14 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse, JSONResponse
-import httpx
-import uvicorn
-import loguru
-from src.hydrator import ChatHydrator, clients
 import os
+
+import httpx
 import logfire
-
-
+import loguru
+import uvicorn
 from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, StreamingResponse
+
+from src.hydrator import ChatHydrator, clients
 
 load_dotenv()
 
@@ -24,6 +24,7 @@ logger.configure(handlers=[logfire.loguru_handler()])
 
 # setup env vars
 LLM_BASE_URL = os.getenv("LLM_BASE_URL")
+
 
 @app.middleware("http")
 async def proxy_middleware(request: Request, call_next):
@@ -82,11 +83,7 @@ async def proxy_middleware(request: Request, call_next):
 
             # Make the request with appropriate method and data
             if request.method == "GET":
-                response = await client.get(
-                    target_url,
-                    headers=headers,
-                    timeout=120.0
-                )
+                response = await client.get(target_url, headers=headers, timeout=120.0)
             else:
                 # JSON body if it's already parsed, otherwise raw bytes
                 kwargs = {}
@@ -96,11 +93,7 @@ async def proxy_middleware(request: Request, call_next):
                     kwargs["content"] = body
 
                 response = await client.request(
-                    request.method,
-                    target_url,
-                    headers=headers,
-                    timeout=120.0,
-                    **kwargs
+                    request.method, target_url, headers=headers, timeout=120.0, **kwargs
                 )
 
             logger.info(f"Received response with status {response.status_code}")
@@ -109,22 +102,30 @@ async def proxy_middleware(request: Request, call_next):
             return StreamingResponse(
                 content=augment_response(response.aiter_bytes(), should_modify_request),
                 status_code=response.status_code,
-                headers=dict(response.headers)
+                headers=dict(response.headers),
             )
 
     except httpx.RequestError as e:
         error_message = str(e)
         logger.error(f"Error forwarding request: {error_message}")
         return JSONResponse(
-            content={"error": {"message": f"Error connecting to OpenAI: {error_message}", "type": "proxy_error"}},
-            status_code=502
+            content={
+                "error": {
+                    "message": f"Error connecting to OpenAI: {error_message}",
+                    "type": "proxy_error",
+                }
+            },
+            status_code=502,
         )
     except Exception as e:
         logger.exception(f"Unexpected error in middleware: {str(e)}")
         return JSONResponse(
-            content={"error": {"message": f"Proxy error: {str(e)}", "type": "proxy_error"}},
-            status_code=500
+            content={
+                "error": {"message": f"Proxy error: {str(e)}", "type": "proxy_error"}
+            },
+            status_code=500,
         )
+
 
 async def augment_response(response_stream, should_modify=False):
     async for chunk in response_stream:

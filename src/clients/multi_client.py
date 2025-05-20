@@ -1,13 +1,15 @@
 import logging
 from typing import List
+
 import httpx
 from loguru import logger
-from src.models.context import WebsiteContextSnippet
-from src.models.resource import ResourceSubmission, ContentType
-from src.clients.context_client_p import ContextClientP
 
+from src.clients.context_client_p import ContextClientP
+from src.models.context import WebsiteContextSnippet
+from src.models.resource import ContentType, ResourceSubmission
 
 API_BASE_URL = "http://127.0.0.1:8000"
+
 
 class MultiClient(ContextClientP):
     """Client that uses the Context Killer API to create and retrieve resources."""
@@ -15,7 +17,7 @@ class MultiClient(ContextClientP):
     def __init__(self, base_url: str = API_BASE_URL):
         self.base_url = base_url
 
-    async def get_context(self, key: str) -> List[str]: # Changed 'url' to 'key'
+    async def get_context(self, key: str) -> List[str]:  # Changed 'url' to 'key'
         """
         Post a URL (passed as 'key') to the API and retrieve the processed content.
         Implements the ContextClient protocol.
@@ -26,18 +28,20 @@ class MultiClient(ContextClientP):
         async with httpx.AsyncClient() as client:
             # Create the resource submission
             submission = ResourceSubmission(
-                url=key, # Use 'key' here
-                title=f"Content from {key}" # Use 'key' here
+                url=key,  # Use 'key' here
+                title=f"Content from {key}",  # Use 'key' here
             )
 
             # Post to create resource
             try:
-                logger.info(f"POST {self.base_url}/api/v1/resources {submission.model_dump()}")
+                logger.info(
+                    f"POST {self.base_url}/api/v1/resources {submission.model_dump()}"
+                )
 
                 response = await client.post(
                     f"{self.base_url}/api/v1/resources",
                     json=submission.model_dump(),
-                    timeout=180.0
+                    timeout=180.0,
                 )
 
                 resource = response.json()
@@ -50,7 +54,7 @@ class MultiClient(ContextClientP):
                 snippet = WebsiteContextSnippet(
                     url=resource["url"],
                     text_content=resource["content"],
-                    title=resource["title"]
+                    title=resource["title"],
                 )
 
                 logger.info(f"Snippet: {snippet}")
@@ -61,17 +65,17 @@ class MultiClient(ContextClientP):
             except httpx.HTTPError as e:
                 logger.error(f"Error creating resource: {e}")
                 # Fall back to mock implementation if API fails
-                return await self._mock_fallback(key) # Pass 'key'
+                return await self._mock_fallback(key)  # Pass 'key'
 
-    async def _mock_fallback(self, key: str) -> List[str]: # Changed 'url' to 'key'
+    async def _mock_fallback(self, key: str) -> List[str]:  # Changed 'url' to 'key'
         """Fallback method if the API request fails."""
         logger.info(f"Using fallback mock for URL (key): {key}")
-        content = f"API request failed. This is fallback content for {key}" # Use 'key'
+        content = f"API request failed. This is fallback content for {key}"  # Use 'key'
 
         snippet = WebsiteContextSnippet(
-            url=key, # Use 'key'
+            url=key,  # Use 'key'
             text_content=content,
-            title=f"Fallback content for {key}" # Use 'key'
+            title=f"Fallback content for {key}",  # Use 'key'
         )
 
         return [snippet.to_xml()]

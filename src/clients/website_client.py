@@ -1,14 +1,17 @@
 import logging
 from typing import List
+
 import httpx
-from src.models.context import WebsiteContextSnippet
-from src.models.resource import ResourceSubmission, ContentType
+
 from src.clients.context_client_p import ContextClientP
+from src.models.context import WebsiteContextSnippet
+from src.models.resource import ContentType, ResourceSubmission
 
 logger = logging.getLogger(__name__)
 
 URL = "https://"
 API_BASE_URL = "http://127.0.0.1:8000"
+
 
 class WebsiteContextClient(ContextClientP):
     async def get_context(self, url: str) -> List[str]:
@@ -20,9 +23,7 @@ class WebsiteContextClient(ContextClientP):
 
         # Create a context snippet
         snippet = WebsiteContextSnippet(
-            url=url,
-            text_content=content,
-            title=f"Content from {url}"
+            url=url, text_content=content, title=f"Content from {url}"
         )
 
         logger.info(f"Snippet: {snippet}")

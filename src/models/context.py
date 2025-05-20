@@ -1,23 +1,25 @@
-from typing import Protocol, Optional, Dict, Any, List
-from enum import Enum
-from dataclasses import dataclass
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol
 from xml.dom import minidom
 
 
 class ContextType(str, Enum):
     """Enum for different types of context snippets."""
+
     WEBSITE = "website"
     CODE = "code"
     DOCUMENT = "document"
     COMMAND = "command"
-    COMMAND_RESULT = "command_result" # For the output of bang commands
+    COMMAND_RESULT = "command_result"  # For the output of bang commands
     # Add more types as needed
 
 
 @dataclass
 class ContextSnippet:
     """Base class for context snippets."""
+
     type: ContextType
     content: Dict[str, Any]
 
@@ -84,15 +86,14 @@ class WebsiteContextSnippet(ContextSnippet):
     """Context snippet for website content."""
 
     def __init__(self, url: str, text_content: str, title: Optional[str] = None):
-        content = {
-            "url": url,
-            "text_content": text_content,
-            "title": title
-        }
+        content = {"url": url, "text_content": text_content, "title": title}
         super().__init__(type=ContextType.WEBSITE, content=content)
 
+
 def __str__(self):
-        return f"WebsiteContextSnippet(url={self.content['url']}, title={self.content['title']}, text_content={self.content['text_content'][:100]})"
+    return f"WebsiteContextSnippet(url={self.content['url']}, title={self.content['title']}, text_content={self.content['text_content'][:100]})"
+
+
 @dataclass
 class CommandContextSnippet(ContextSnippet):
     """Context snippet for the result of a bang command."""
@@ -101,6 +102,6 @@ class CommandContextSnippet(ContextSnippet):
         content = {
             "command_query": command_query,
             "result_text": result_text,
-            "source": source
+            "source": source,
         }
         super().__init__(type=ContextType.COMMAND_RESULT, content=content)

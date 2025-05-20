@@ -1,8 +1,10 @@
-import pytest
-from typing import List
 import xml.etree.ElementTree as ET
-from src.hydrator import ChatHydrator, ContextClient, ContextCommand
+from typing import List
+
+import pytest
+
 from src.clients.website_client import WebsiteContextClient
+from src.hydrator import ChatHydrator, ContextClient, ContextCommand
 
 
 class MockWebsiteClient(ContextClient):
@@ -10,22 +12,22 @@ class MockWebsiteClient(ContextClient):
 
     async def get_context(self, url: str) -> List[str]:
         """Mock implementation of get_context."""
-        return [f"""
+        return [
+            f"""
 <context-snippet type="website">
   <url>{url}</url>
   <text-content>Mocked content for testing: {url}</text-content>
   <title>Mock Title</title>
 </context-snippet>
-"""]
+"""
+        ]
 
 
 @pytest.mark.asyncio
 async def test_hydrator_with_mock_clients():
     """Test hydrator with mock clients."""
     # Create hydrator with mock clients
-    clients = {
-        ContextCommand.WEBSITE: MockWebsiteClient()
-    }
+    clients = {ContextCommand.WEBSITE: MockWebsiteClient()}
     hydrator = ChatHydrator(clients)
 
     # Create test chat with URLs
@@ -33,12 +35,9 @@ async def test_hydrator_with_mock_clients():
         "messages": [
             {
                 "role": "user",
-                "content": "Check out https://example.com and https://test.org"
+                "content": "Check out https://example.com and https://test.org",
             },
-            {
-                "role": "assistant",
-                "content": "I'll check those out!"
-            }
+            {"role": "assistant", "content": "I'll check those out!"},
         ]
     }
 
@@ -76,20 +75,11 @@ async def test_hydrator_with_mock_clients():
 async def test_hydrator_with_real_clients():
     """Test hydrator with real clients."""
     # Create hydrator with real clients
-    clients = {
-        ContextCommand.WEBSITE: WebsiteContextClient()
-    }
+    clients = {ContextCommand.WEBSITE: WebsiteContextClient()}
     hydrator = ChatHydrator(clients)
 
     # Create test chat with URLs
-    chat = {
-        "messages": [
-            {
-                "role": "user",
-                "content": "Check out https://example.com"
-            }
-        ]
-    }
+    chat = {"messages": [{"role": "user", "content": "Check out https://example.com"}]}
 
     # Hydrate the chat
     hydrated_chat = await hydrator.get_hydrated_chat(chat)

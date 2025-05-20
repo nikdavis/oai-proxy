@@ -1,12 +1,21 @@
 import asyncio
 import os
-from typing import Callable, Awaitable, Any, List # Keep Any for now if truly needed, otherwise try to be more specific
-import shlex # For robust command string parsing
-# import litellm # Removed for deterministic matching
+import shlex  # For robust command string parsing
+from typing import (  # Keep Any for now if truly needed, otherwise try to be more specific
+    Any,
+    Awaitable,
+    Callable,
+    List,
+)
 
-from src.clients.context_client_p import ContextClientP
-from src.models.context import CommandContextSnippet, ContextType # ContextType not used, can be removed later if still unused
 import loguru
+
+# import litellm # Removed for deterministic matching
+from src.clients.context_client_p import ContextClientP
+from src.models.context import (  # ContextType not used, can be removed later if still unused
+    CommandContextSnippet,
+    ContextType,
+)
 
 logger = loguru.logger
 
@@ -26,36 +35,47 @@ class BangCommandHandlerClient(ContextClientP):
         """Scans the configured directory for .txt book files."""
         logger.info(f"Scanning for book files in: {self.books_dir_path}")
         if not os.path.isdir(self.books_dir_path):
-            logger.warning(f"Books directory '{self.books_dir_path}' not found. No books will be available.")
+            logger.warning(
+                f"Books directory '{self.books_dir_path}' not found. No books will be available."
+            )
             self.available_book_files = []
             return
 
         try:
             for filename in os.listdir(self.books_dir_path):
-                if filename.endswith(".txt") and os.path.isfile(os.path.join(self.books_dir_path, filename)):
+                if filename.endswith(".txt") and os.path.isfile(
+                    os.path.join(self.books_dir_path, filename)
+                ):
                     self.available_book_files.append(filename)
             if self.available_book_files:
-                logger.info(f"Found {len(self.available_book_files)} book(s): {self.available_book_files}")
+                logger.info(
+                    f"Found {len(self.available_book_files)} book(s): {self.available_book_files}"
+                )
             else:
                 logger.warning(f"No .txt files found in '{self.books_dir_path}'.")
         except Exception as e:
             logger.error(f"Error scanning book directory '{self.books_dir_path}': {e}")
             self.available_book_files = []
 
-
     def _register_handlers(self):
         self.register_command("testcmd", self._handle_test_command)
         self.register_command("books", self._handle_list_books_command)
         self.register_command("book", self._handle_get_book_detail_command)
-        self.register_command("b", self._handle_get_book_detail_command) # Alias for !book
+        self.register_command(
+            "b", self._handle_get_book_detail_command
+        )  # Alias for !book
 
     def register_command(self, command_name: str, handler: CommandHandler):
         if command_name in self.command_handlers:
-            logger.warning(f"Command '{command_name}' is already registered. Overwriting.")
+            logger.warning(
+                f"Command '{command_name}' is already registered. Overwriting."
+            )
         self.command_handlers[command_name] = handler
         logger.info(f"Registered bang command: !{command_name}")
 
-    async def _parse_command_string(self, command_query: str) -> tuple[str | None, list[str]]:
+    async def _parse_command_string(
+        self, command_query: str
+    ) -> tuple[str | None, list[str]]:
         """
         Parses the command query into a command and its arguments.
         Example: "weather London" -> ("weather", ["London"])
@@ -72,8 +92,9 @@ class BangCommandHandlerClient(ContextClientP):
             logger.error(f"Error parsing command string '{command_query}': {e}")
             return None, []
 
-
-    async def get_context(self, key: str) -> list[str]: # Changed 'command_query' to 'key'
+    async def get_context(
+        self, key: str
+    ) -> list[str]:  # Changed 'command_query' to 'key'
         """
         Receives a command query string (passed as 'key'),
         parses it, dispatches to the appropriate handler, and returns
@@ -81,13 +102,13 @@ class BangCommandHandlerClient(ContextClientP):
         """
         logger.info(f"BangCommandHandlerClient received command query (key): '{key}'")
 
-        command_name, args = await self._parse_command_string(key) # Use 'key' here
+        command_name, args = await self._parse_command_string(key)  # Use 'key' here
 
         if not command_name:
             error_snippet = CommandContextSnippet(
-                command_query=f"!{key}", # Re-add '!' for the snippet, use 'key'
+                command_query=f"!{key}",  # Re-add '!' for the snippet, use 'key'
                 result_text="Error: Could not parse command.",
-                source="BangCommandHandlerClient"
+                source="BangCommandHandlerClient",
             )
             return [error_snippet.to_xml()]
 
@@ -98,11 +119,13 @@ class BangCommandHandlerClient(ContextClientP):
                 snippet = await handler(args)
                 return [snippet.to_xml()]
             except Exception as e:
-                logger.error(f"Error executing handler for command '{command_name}' with args '{args}': {e}")
+                logger.error(
+                    f"Error executing handler for command '{command_name}' with args '{args}': {e}"
+                )
                 error_snippet = CommandContextSnippet(
                     command_query=f"!{command_name} {' '.join(args) if args else ''}",
                     result_text=f"Error executing command '{command_name}': {str(e)}",
-                    source="BangCommandHandlerClient"
+                    source="BangCommandHandlerClient",
                 )
                 return [error_snippet.to_xml()]
         else:
@@ -110,7 +133,7 @@ class BangCommandHandlerClient(ContextClientP):
             not_found_snippet = CommandContextSnippet(
                 command_query=f"!{command_name} {' '.join(args) if args else ''}",
                 result_text=f"Error: Command '!{command_name}' not found.",
-                source="BangCommandHandlerClient"
+                source="BangCommandHandlerClient",
             )
             return [not_found_snippet.to_xml()]
 
@@ -120,44 +143,52 @@ class BangCommandHandlerClient(ContextClientP):
         return CommandContextSnippet(
             command_query=f"!testcmd {' '.join(args) if args else ''}",
             result_text=f"Test command executed successfully with args: {args}",
-            source="TestCommandHandler"
+            source="TestCommandHandler",
         )
 
     # --- Book Command Handlers ---
 
-    async def _handle_list_books_command(self, args: list[str]) -> CommandContextSnippet:
+    async def _handle_list_books_command(
+        self, args: list[str]
+    ) -> CommandContextSnippet:
         logger.info(f"Executing _handle_list_books_command with args: {args}")
         if not self.available_book_files:
             return CommandContextSnippet(
                 command_query="!books",
                 result_text="No books available. Please check the configuration for BOOKS_DIR_PATH.",
-                source="LocalBookDirectory"
+                source="LocalBookDirectory",
             )
 
-        book_list_str = "\n".join([f"- {book_file}" for book_file in self.available_book_files])
+        book_list_str = "\n".join(
+            [f"- {book_file}" for book_file in self.available_book_files]
+        )
         return CommandContextSnippet(
             command_query="!books",
             result_text=f"Available books:\n{book_list_str}",
-            source="LocalBookDirectory"
+            source="LocalBookDirectory",
         )
 
-    async def _handle_get_book_detail_command(self, args: list[str]) -> CommandContextSnippet:
+    async def _handle_get_book_detail_command(
+        self, args: list[str]
+    ) -> CommandContextSnippet:
         user_query = " ".join(args).strip()
         command_query_str = f"!book {user_query}" if user_query else "!book"
-        logger.info(f"Executing _handle_get_book_detail_command with query: '{user_query}'")
+        logger.info(
+            f"Executing _handle_get_book_detail_command with query: '{user_query}'"
+        )
 
         if not user_query:
             return CommandContextSnippet(
                 command_query=command_query_str,
                 result_text="Usage: !book <query> or !b <query>. Please provide a search query for the book title.",
-                source="BangCommandHandlerClient"
+                source="BangCommandHandlerClient",
             )
 
         if not self.available_book_files:
             return CommandContextSnippet(
                 command_query=command_query_str,
                 result_text="No books available to search. Please check the BOOKS_DIR_PATH configuration.",
-                source="LocalBookDirectory"
+                source="LocalBookDirectory",
             )
 
         # Deterministic filename matching
@@ -172,47 +203,55 @@ class BangCommandHandlerClient(ContextClientP):
                 normalized_book_file = normalized_book_file[:-4]
 
             if normalized_user_query == normalized_book_file:
-                matched_filename = book_file # Use the original filename with case and extension
+                matched_filename = (
+                    book_file  # Use the original filename with case and extension
+                )
                 break
 
-        logger.info(f"Normalized query: '{normalized_user_query}', Matched filename: {matched_filename}")
+        logger.info(
+            f"Normalized query: '{normalized_user_query}', Matched filename: {matched_filename}"
+        )
 
         if matched_filename:
             try:
                 book_file_path = os.path.join(self.books_dir_path, matched_filename)
-                with open(book_file_path, 'r', encoding='utf-8') as f:
+                with open(book_file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # Truncate content if it's too long to avoid overly large context
-                max_len = 3000 # characters, adjust as needed
+                max_len = 3000  # characters, adjust as needed
                 if len(content) > max_len:
                     content = content[:max_len] + "\n... (truncated)"
 
                 return CommandContextSnippet(
                     command_query=command_query_str,
                     result_text=f"Content for {matched_filename}:\n\n{content}",
-                    source=f"LocalBookFile:{matched_filename}"
+                    source=f"LocalBookFile:{matched_filename}",
                 )
-            except FileNotFoundError: # Should be rare if available_book_files is accurate
-                logger.error(f"Book file '{matched_filename}' (matched deterministically) not found at path: {book_file_path}")
+            except (
+                FileNotFoundError
+            ):  # Should be rare if available_book_files is accurate
+                logger.error(
+                    f"Book file '{matched_filename}' (matched deterministically) not found at path: {book_file_path}"
+                )
                 return CommandContextSnippet(
                     command_query=command_query_str,
                     result_text=f"Error: Book file '{matched_filename}' was matched but could not be found on disk.",
-                    source="LocalBookFile"
+                    source="LocalBookFile",
                 )
             except Exception as e:
                 logger.error(f"Error reading book file '{matched_filename}': {e}")
                 return CommandContextSnippet(
                     command_query=command_query_str,
                     result_text=f"Error reading content for book '{matched_filename}': {str(e)}",
-                    source=f"LocalBookFile:{matched_filename}"
+                    source=f"LocalBookFile:{matched_filename}",
                 )
         else:
             logger.info(f"No matching book found for query '{user_query}'.")
             return CommandContextSnippet(
                 command_query=command_query_str,
                 result_text=f"Book matching query '{user_query}' not found. Try '!books' to see available titles.",
-                source="LocalBookDirectory"
+                source="LocalBookDirectory",
             )
 
 
@@ -221,19 +260,20 @@ async def main():
     # Create a dummy context/books directory and some files for testing
     test_books_dir = "./context/books_test_temp"
     os.makedirs(test_books_dir, exist_ok=True)
-    with open(os.path.join(test_books_dir, "Sample Book One.txt"), "w") as f: # Note the casing
+    with open(
+        os.path.join(test_books_dir, "Sample Book One.txt"), "w"
+    ) as f:  # Note the casing
         f.write("This is the content of sample book one.")
     with open(os.path.join(test_books_dir, "another_title.txt"), "w") as f:
         f.write("Content for another title here.")
     with open(os.path.join(test_books_dir, "ExactMatch.txt"), "w") as f:
         f.write("Content for ExactMatch.")
 
-
     # Temporarily set the environment variable for the test
     original_books_dir_path = os.getenv("BOOKS_DIR_PATH")
     os.environ["BOOKS_DIR_PATH"] = test_books_dir
 
-    client = BangCommandHandlerClient() # Now uses BOOKS_DIR_PATH from env
+    client = BangCommandHandlerClient()  # Now uses BOOKS_DIR_PATH from env
 
     # Test 1: List books
     print("--- Test: !books ---")

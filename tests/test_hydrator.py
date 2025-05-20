@@ -1,6 +1,8 @@
 import pytest
-from src.hydrator import ChatHydrator, ContextCommand
+
 from src.clients.website_client import WebsiteContextClient
+from src.hydrator import ChatHydrator, ContextCommand
+
 
 @pytest.mark.asyncio
 async def test_chat_hydrator_with_urls():
@@ -10,19 +12,14 @@ async def test_chat_hydrator_with_urls():
         "messages": [
             {
                 "role": "user",
-                "content": "Check out this website: https://example.com and also https://test.org"
+                "content": "Check out this website: https://example.com and also https://test.org",
             },
-            {
-                "role": "assistant",
-                "content": "Here's another: https://python.org"
-            }
+            {"role": "assistant", "content": "Here's another: https://python.org"},
         ]
     }
 
     # Initialize the hydrator with the website client
-    clients = {
-        ContextCommand.WEBSITE: WebsiteContextClient()
-    }
+    clients = {ContextCommand.WEBSITE: WebsiteContextClient()}
     hydrator = ChatHydrator(clients)
 
     # Get the hydrated chat
@@ -40,7 +37,10 @@ async def test_chat_hydrator_with_urls():
     assert "<context-snippet" in user_content
 
     # Assistant messages shouldn't be modified yet (only user messages)
-    assert hydrated_chat["messages"][1]["content"] == "Here's another: https://python.org"
+    assert (
+        hydrated_chat["messages"][1]["content"] == "Here's another: https://python.org"
+    )
+
 
 @pytest.mark.asyncio
 async def test_chat_hydrator_without_urls():
@@ -48,21 +48,13 @@ async def test_chat_hydrator_without_urls():
     # Create a test chat without URLs
     test_chat = {
         "messages": [
-            {
-                "role": "user",
-                "content": "Hello, how are you?"
-            },
-            {
-                "role": "assistant",
-                "content": "I'm doing well, thank you!"
-            }
+            {"role": "user", "content": "Hello, how are you?"},
+            {"role": "assistant", "content": "I'm doing well, thank you!"},
         ]
     }
 
     # Initialize the hydrator
-    clients = {
-        ContextCommand.WEBSITE: WebsiteContextClient()
-    }
+    clients = {ContextCommand.WEBSITE: WebsiteContextClient()}
     hydrator = ChatHydrator(clients)
 
     # Get the hydrated chat
@@ -75,13 +67,12 @@ async def test_chat_hydrator_without_urls():
     assert hydrated_chat["messages"][0]["content"] == "Hello, how are you?"
     assert hydrated_chat["messages"][1]["content"] == "I'm doing well, thank you!"
 
+
 @pytest.mark.asyncio
 async def test_chat_hydrator_empty_chat():
     """Test the hydrator with an empty chat."""
     # Initialize the hydrator
-    clients = {
-        ContextCommand.WEBSITE: WebsiteContextClient()
-    }
+    clients = {ContextCommand.WEBSITE: WebsiteContextClient()}
     hydrator = ChatHydrator(clients)
 
     # Test with empty chat
