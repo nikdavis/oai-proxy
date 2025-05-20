@@ -34,11 +34,13 @@ class BangCommandHandlerClient(ContextClientP):
     def _scan_book_directory(self):
         """Scans the configured directory for .txt book files."""
         logger.info(f"Scanning for book files in: {self.books_dir_path}")
+        self.available_book_files = [] # Reset the list before scanning
+
         if not os.path.isdir(self.books_dir_path):
             logger.warning(
                 f"Books directory '{self.books_dir_path}' not found. No books will be available."
             )
-            self.available_book_files = []
+            # self.available_book_files is already [], so just return
             return
 
         try:
@@ -55,7 +57,7 @@ class BangCommandHandlerClient(ContextClientP):
                 logger.warning(f"No .txt files found in '{self.books_dir_path}'.")
         except Exception as e:
             logger.error(f"Error scanning book directory '{self.books_dir_path}': {e}")
-            self.available_book_files = []
+            self.available_book_files = [] # Ensure it's empty on error too
 
     def _register_handlers(self):
         self.register_command("testcmd", self._handle_test_command)
