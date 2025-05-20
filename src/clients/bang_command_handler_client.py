@@ -152,6 +152,35 @@ class BangCommandHandlerClient(ContextClientP):
         self, args: list[str]
     ) -> CommandContextSnippet:
         logger.info(f"Executing _handle_list_books_command with args: {args}")
+
+        if args:
+            potential_book_file_arg = args[0]
+            # Normalize the first argument (potential book file) for matching
+            normalized_query_arg = potential_book_file_arg.lower()
+            if normalized_query_arg.endswith(".txt"):
+                normalized_query_arg = normalized_query_arg[:-4]
+
+            matched_filename_for_delegation = None
+            for book_file_in_list in self.available_book_files:
+                normalized_book_file_in_list = book_file_in_list.lower()
+                if normalized_book_file_in_list.endswith(".txt"):
+                    normalized_book_file_in_list = normalized_book_file_in_list[:-4]
+
+                if normalized_query_arg == normalized_book_file_in_list:
+                    matched_filename_for_delegation = book_file_in_list  # Use original filename
+                    break
+
+            if matched_filename_for_delegation:
+                logger.info(
+                    f"Command '!books {potential_book_file_arg}...' matches book '{matched_filename_for_delegation}'. "
+                    f"Delegating to _handle_get_book_detail_command for this book."
+                )
+                # Delegate to the handler that gets book details.
+                # The rest of `args` (e.g., "what is this about") are not used for book retrieval itself
+                # but will be part of the overall prompt to the LLM.
+                return await self._handle_get_book_detail_command([matched_filename_for_delegation])
+
+        # Original behavior: list all books if no specific book identified in args[0] or no args
         if not self.available_book_files:
             return CommandContextSnippet(
                 command_query="!books",
