@@ -5,7 +5,10 @@ services:
     image: oai-proxy:latest
     container_name: oai-proxy
     environment:
+      - LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
       - LOGFIRE_TOKEN=pylf_v1_us_ZCPt1SQLNS753msYxLNBMXDlvQlKDc85SPfJYSj42D3N
+    volumes:
+      - ./context:/app/context
     network_mode: "host"
     restart: unless-stopped
     healthcheck:
