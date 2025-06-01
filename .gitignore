@@ -11,3 +11,6 @@ wheels/
 .env
 # macOS
 .DS_Store
+
+# Context directory
+context/

@@ -1,18 +1,35 @@
 version: '3'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: oai-proxy-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
   api:
     image: oai-proxy:latest
     container_name: oai-proxy
     environment:
       - LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
       - LOGFIRE_TOKEN=pylf_v1_us_ZCPt1SQLNS753msYxLNBMXDlvQlKDc85SPfJYSj42D3N
+      - REDIS_URL=redis://localhost:6379
+      - CONTEXT_KILLER_API_BASE_URL=http://localhost:8000
     volumes:
       - ./context:/app/context
     network_mode: "host"
+    depends_on:
+      - redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+volumes:
+  redis-data:

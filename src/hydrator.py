@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Union
 
 import loguru
 
+from src.cache import CacheWrapper
 from src.clients.bang_command_handler_client import (
     BangCommandHandlerClient,  # Added import
 )
@@ -20,7 +21,7 @@ class ContextCommand(StrEnum):
 
 
 # cache of context snippets
-context_cache: Dict[str, List[str]] = {}
+context_cache = CacheWrapper(ttl_seconds=300)  # 5 minute TTL
 
 
 class ContextClient(Protocol):
@@ -101,13 +102,14 @@ class ChatHydrator:
                     if urls and ContextCommand.WEBSITE in self.clients:
                         url_snippets_to_add = []
                         for url in urls:
-                            if url in context_cache:
-                                url_snippets_to_add.extend(context_cache[url])
+                            cached_snippets = context_cache.get(url)
+                            if cached_snippets is not None:
+                                url_snippets_to_add.extend(cached_snippets)
                             else:
                                 new_snippets = await self.clients[
                                     ContextCommand.WEBSITE
                                 ].get_context(url)
-                                context_cache[url] = new_snippets  # Cache for URLs
+                                context_cache.set(url, new_snippets)  # Cache for URLs
                                 url_snippets_to_add.extend(new_snippets)
                         if url_snippets_to_add:
                             context_snippets.extend(url_snippets_to_add)
@@ -129,14 +131,15 @@ class ChatHydrator:
                         bang_snippets_to_add = []
                         for command_str in bang_commands:
                             cache_key = f"!{command_str}"  # Cache key for bang commands
-                            if cache_key in context_cache:
-                                bang_snippets_to_add.extend(context_cache[cache_key])
+                            cached_snippets = context_cache.get(cache_key)
+                            if cached_snippets is not None:
+                                bang_snippets_to_add.extend(cached_snippets)
                             else:
                                 # The command_str (e.g., "books" or "weather London") is the key for the client
                                 new_snippets = await self.clients[
                                     ContextCommand.BANG_COMMAND
                                 ].get_context(command_str)
-                                context_cache[cache_key] = new_snippets
+                                context_cache.set(cache_key, new_snippets)
                                 bang_snippets_to_add.extend(new_snippets)
                         if bang_snippets_to_add:
                             context_snippets.extend(bang_snippets_to_add)
